@@ -1,0 +1,30 @@
+
+name: AccuKnox Container Scan
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run AccuKnox Container Scanner
+        uses: accuknox/container-scan-action@v1.0.1
+        with:
+          soft_fail: false          # set false to fail workflow if vulnerabilities are found
+          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+          accuknox_label: ${{ secrets.ACCUKNOX_LABEL }}
+          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+          image_name: "ghcr.io/fortress-sri/app-images/satapp"
+          tag: "latest"             # optional
+          severity: "LOW, MEDIUM, HIGH, CRITICAL"
+          
+  #    - name: Run a multi-line script
+  #     run: |
+  #       echo Add other actions to build,
+  #       echo test, and deploy your project.
