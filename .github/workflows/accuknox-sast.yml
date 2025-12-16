@@ -1,0 +1,25 @@
+name: AccuKnox SAST Workflow
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run AccuKnox SAST
+        uses: accuknox/sast-scan-action@latest
+        with:
+          skip_sonar_scan: false
+          sonar_project_key: ${{ secrets.SONAR_PROJECT_KEY }}
+          sonar_token: ${{ secrets.SONAR_TOKEN }}
+          sonar_host_url: ${{ secrets.SONAR_HOST_URL }}
+          sonar_organization_id: ${{ secrets.SONAR_ORG_ID }}
+          accuknox_endpoint: ${{ secrets.ACCUKNOX_ENDPOINT }}
+          accuknox_token: ${{ secrets.ACCUKNOX_TOKEN }}
+          accuknox_label: ${{ secrets.ACCUKNOX_LABEL }}
+          soft_fail: false
