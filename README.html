@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='utf-8' ?><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head><body><h2 id="description">Description</h2><p>This repository contains FORTRESS demonstration applications and associated support infrastructure.</p><p>Note that the code base is oriented toward running the system either on bare metal or within Docker containers (cf., Kubernetes pods).</p><h2 id="directory-layout">Directory Layout</h2><pre><code>    *Ctrl.sh                         # scripts to build, run, and manage the demo apps
+    {sat,const}CtrlDebug.sh          # scripts that build 'debug' enabled satellite and constellation apps
+    webHook.sh                       # script to configure, scaffold, and run web hook
+    {_dockerCtrl,_bareMetal}.sh      # utility scripts sourced by most of above
+
+    Dockerfile.{_3rd,_base,_const,   # template files used to build applications
+                _qApp}
+    startApp.sh                      # bash script used by edge node containers
+
+    src/python/
+        *.py                         # application and support source code
+        img/                         # contains flat Earth JPEG displayed by template/index.html (see next)
+        template/                    # HTML served by geo_map_server.py
+        requirements-*.txt           # pip3 application requirements (baked into top-level Dockerfile.* files)
+                                     # and referenced by _bareMetal.sh
+    test/
+      orbit/
+        *.json                       # demo configuration JSON files
+      webhook/
+        webhook_tun                  # web hook ssh private key
+        webhook_tun.pub              # web hook ssh public key
+    tmp_patch_bns/                   # script and file used to modify github's Basic_Network_Scanner used by
+                                     # the Third Party application
+    util/                            # miscellaneous utilities
+        test/                        # source geom_utils.sh for commands to interact with geom_map_server.py
+        proc_net_tcp.py              # displays /proc/net TCP connections when netstat is unavailable
+        WikiTextToHtmlConverter.java # custom java app that converts Markdown to HTML</code></pre><h2 id="json-configuration-file">JSON Configuration File</h2><p>The JSON configuration file typically resides in <code>test/orbit/</code> and specifies</p><ul><li>The number of orbital planes (<code>num-planes</code>, <code>&gt; 0</code>).</li><li>The number of satellites per plane (<code>num-sats</code>, <code>&gt; 0</code>).</li><li>Orbital inclination (<code>inclination</code> in degrees, <code>-90..90</code>); a closed range.</li><li>Initial longitude (<code>longitude</code> in degrees, <code>-180..180</code>; ignored when inclination is <code>0</code> (zero) degrees); a closed range.</li><li>Update interval (<code>interval</code> in seconds, <code>&gt; 0</code>).</li><li>The location and ports for</li><ul><li>The <code>Q Controller</code>'s</li><ul><li><code>REST API</code> (<code>Q-endpoint</code>) and</li><li><code>ZMQ Publication</code> (<code>Q-ZMQ-pub</code>),</li></ul><li>Satellite <code>REST API</code> endpoints (<code>endpoint</code>, <code>&lt;string&gt;</code> or <code>&lt;string&gt;</code> array):</li><ul><li><code>Flat Earth</code>'s endpoint,</li><li><code>Table Display</code>'s <code>REST API</code> endpoint,</li></ul><li>Satellite exfiltration endpoint (<code>exfilt-endpoint</code>), and</li><li>The <code>Web Hook</code>'s</li><ul><li><code>REST API</code> (<code>WebHook-endpoint</code>).</li></ul><li><code>Table Display</code>'s OpenHorizon services <code>REST API</code> endpoint (<code>OH_endpoint</code>, <code>&lt;string&gt;</code>).</li></ul><li>The Third Party application's Basic Network Scanner mode (<code>type</code>).</li><li>The <code>Web Hook</code>'s <code>ssh</code> reverse tunnel to the <code>FORTRESS</code> DMZ VM (<code>WebHook-tunnel</code>).</li><li>Time-Multiplier (<code>time-multiplier</code>; <code>&gt; 0</code>), real-time scaler (e.g., <code>100.0</code> runs the orbit a hundred times faster).</li><li>A list of Hardware-In-the-Loop (HIL) nodes (<code>HIL</code>, <code>dict</code> with <code>&lt;host&gt;</code> as key and <code>&lt;ordinal&gt;</code> or <code>&lt;plane&gt;,&lt;ordinal&gt;</code> as value).
+<p>Example:</p></li></ul><pre><code>    "HIL": {
+        "fortress1":     1,
+        "fortress2":  "2,2",
+        "fortress3":     3,
+        "fortress4":  "2,4",
+        "fortress5":  "1,5",
+        "fortress6":  "2,6",
+        "fortress7":     7
+    }</code></pre><h3 id="rest-api-endpoints">REST API Endpoints</h3><p>The endpoint URL syntax is</p><pre><code>    http://&lt;host&gt;:&lt;port&gt;/&lt;path&gt;</code></pre><p>Note that <code>&lt;path&gt;</code> <em>must be globally unique</em> (viz., not shared between endpoints) because the <code>*Ctrl*.sh</code> scripts use
+their paths to assign the <code>host</code> and <code>port</code> to their underlying services.</p><p>Satellite endpoints may also have associated intervals, which may be specified by appending <code>,&lt;interval&gt;</code> to the URL.  As examples,</p><pre><code>   "endpoint"="http://fortress21:25250/api/marker,2"</code></pre><p>and</p><pre><code>   "endpoint"=["http://fortress21:25250/api/marker",
+               "http://fortress21:34142/api/record,15.0"]</code></pre><p>The last example's first entry's (implicit) <code>interval</code> is the global <code>interval</code> value.</p><p>N.b.: the Flat Earth display endpoint <code>&lt;path&gt;</code> is <code>"api/marker"</code>, while the Table display endpoint <code>&lt;path&gt;</code> is <code>"api/record"</code>.</p><h2 id="set-up">Set Up</h2><p>As a convenience, for all <code>bash</code> sessions, enter</p><pre><code>     export JSON_CONF=&lt;JSON configuration&gt;</code></pre><p>where <code>&lt;JSON configuration&gt;</code> resides in <code>test/orbit/</code>.</p><h2 id="building">Building</h2><p>Given an application script, <code>{map,orbit,q,sat,table}Ctrl.sh</code>, enter</p><pre><code>   ./&lt;app&gt;Ctrl.sh build</code></pre><p>To build an image from a host not listed in <code>&lt;JSON configuration&gt;</code>, enter</p><pre><code>   ANY_HOST=1 ./&lt;app&gt;Ctrl.sh build</code></pre><p>For further information, replace <code>build</code> with <code>-h</code> or <code>--help</code>.</p><h2 id="running">Running</h2><p>Once an application image is created, you may either <code>create</code> or <code>run</code> the associated container.</p><p>The containers should be started in this order:</p><ol><li>Q Controller (<code>./qCtrl.sh run</code>)</li><li>Flat Earth display (<code>./mapCtrl.sh run</code>) and Table display (<code>./tableCtrl.sh run</code>)</li><li>Constellation (<code>./constCtrl.sh run</code>; <code>./QController.sh stop hil</code>)</li><li>Satellites (<code>./satCtrl.sh run</code>) and Third Party application (<code>./thirdCtrl.sh run</code>)</li></ol><h2 id="run-time-control">Run-Time Control</h2><h3 id="qcontroller-sh"><code>QController.sh</code></h3><p><code>QController.sh</code> communicates with Q Controller service to control the running demonstration.</p><pre><code>    QController.sh [--help] [&lt;JSON conf&gt;] &lt;command&gt;
+
+    where &lt;command&gt; is
+        stop [&lt;node spec&gt;] [&lt;app class&gt;]
+                   stops specified application class, where &lt;app class&gt;
+                   is 'node', 'sat*', '3rd', 'third*', 'hil', or
+                   (implicitly) any
+        debug [&lt;node spec&gt;] [disable]
+                   enables or disables satellite intervals debug mode
+        exfilt [&lt;node spec&gt;] [disable]
+                   enables or disables satellite intervals exfiltration
+        thirdParty [&lt;node spec&gt;]
+                   enables third party nmap application
+        info       shows registered satellite intervals
+        hil        shows configured Hardware-In-the-Loop (HIL) hosts
+
+    and
+
+        &lt;node spec&gt; is
+            &lt;plane range&gt; [&lt;ordinal range&gt;]
+          or
+            &lt;HIL hostname&gt;
+
+    The ancillary development &lt;command&gt;
+
+        _start     sends start notification to satellites; this is
+                   needed when there are fewer running satellites than
+                   are specified in the JSON configuration
+
+    If the environment variable, JSON_CONF, is defined, viz.,
+
+       export JSON_CONF=&lt;JSON conf&gt;
+
+    then the &lt;JSON conf&gt; CLI argument is not required.</code></pre><h3 id="ctrl-sh"><code>*Ctrl*.sh</code></h3><p><code>*Ctrl*.sh</code> scripts build, run, and manage the demo apps.</p><pre><code>    *Ctrl*.sh [--help] [--force] &lt;command&gt; [&lt;arg&gt;]
+
+    where &lt;command&gt; is
+        build    provisionally builds docker image ("&lt;IMAGE&gt;")
+        create   provisionally creates container ("&lt;CONTAINER&gt;")
+        run      provisionally runs or starts container ("&lt;CONTAINER&gt;")
+        stop     stops running container
+        restart  restarts running container
+        shell    executes an interactive shell in the running container
+        log [clear]
+                 clears or continuously displays application's console log
+        status   displays image and container status
+        pause    pauses running container  
+        resume   resumes/unpauses container
+        signal &lt;signal val&gt;
+                 sends signal to running container
+        inspect [image]
+                 inspects container ("&lt;CONTAINER&gt;") or image ("&lt;IMAGE&gt;")
+        bcreate  builds docker image ("&lt;IMAGE&gt;") and creates container ("&lt;CONTAINER&gt;")
+        brun     builds docker image ("&lt;IMAGE&gt;") and runs container ("&lt;CONTAINER&gt;")
+        lcreate  creates container ("&lt;CONTAINER&gt;") and displays log
+        lrun     runs container ("&lt;CONTAINER&gt;") and displays log
+    and
+        --force  automagically satisfies build, run, and shell command prerequisites
+
+    Note:
+
+        To build an image on a host not specified in the JSON config file,
+        run
+
+            ANY_HOST=1 *Ctrl*.sh [--force] build 
+
+        RUNNING ON BARE METAL
+        ------- -- ---- -----
+        To run *Ctrl*.py directly on a host (cf., inside Docker containers), run
+
+        $_BNAME [--help] (--bare | --metal) [build|prep]
+
+        where
+            build  satisfies installation dependencies but does not run *Ctrl*.py
+            prep</code></pre></body></html>

@@ -1,0 +1,16 @@
+FROM python:3.14-slim-bookworm
+
+RUN pip3 install \
+    flask \
+    numpy \
+    pyproj \
+    requests \
+    scipy \
+    tornado \
+    zmq
+
+WORKDIR /app
+
+COPY src/python/*.py test/orbit/_JSON .
+
+CMD ["python3", "-u", "./_APP.py", "/app/_JSON"]

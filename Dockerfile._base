@@ -1,0 +1,24 @@
+FROM python:3.14-slim-bookworm
+
+# curl for exfiltration
+RUN apt-get update && \
+    apt-get install \
+        --no-install-recommends -y \
+        curl \
+        && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install \
+    flask \
+    numpy \
+    pyproj \
+    requests \
+    scipy \
+    tornado \
+    zmq
+
+WORKDIR /app
+
+COPY startApp.sh src/python/*.py test/orbit/_JSON .
+
+CMD ["bash", "startApp.sh", "python3", "-u", "./_APP.py", "/app/_JSON"]

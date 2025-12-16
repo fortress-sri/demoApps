@@ -1,0 +1,23 @@
+{
+    "num-planes": 2,
+    "num-sats": 14,
+    "HIL": {
+	"fortress20":    2,
+	"fortress21": "2,3"
+    },
+    "inclination": "60.0",
+    "longitude": "0.0..35.0",
+    "start-time": "18:00:00",
+    "endpoint": ["http://fortress21:25250/api/marker","http://fortress21:34142/api/record"],
+    "OH_endpoint": "http://fortress21:34142/api/OH_services",
+    "interval": 1,
+    "time-multiplier": 100,
+    "Q-endpoint": "http://fortress21:16171/nodes",
+    "Q-ZMQ-pub": "tcp://fortress21:12343",
+    "exfilt-endpoint": "http://fortress21:24519/exfilt",
+    "log-level": "DEBUG",
+    "WebHook-endpoint": "http://fortress21:28172/api/webHook",
+    "WebHook-tunnel": "ssh -Nf -o StrictHostKeyChecking=no -R 41505:localhost:28172 -i ~/.ssh/webhook_tun webhook@192.12.33.51",
+    "type": "arp",
+    "debug": true
+}

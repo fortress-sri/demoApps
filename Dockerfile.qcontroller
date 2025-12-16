@@ -1,0 +1,27 @@
+FROM python:3.14-slim-bookworm
+
+# To implement their REST APIs, QController.py, geo_map_display.py,
+# geo_table_server.py, and webHook.py require
+#
+#   flask, tornado, and requests
+#
+# Additionally, QController.py requires
+#
+#   zmq
+#
+# to support ZMQ pub/sub.
+
+RUN pip3 install \
+    flask \
+    requests \
+    tornado \
+    zmq
+
+WORKDIR /app
+
+COPY src/python/*.py test/orbit/demo.json .
+#_MORE_DOCKER_CMDS
+
+# QController.py requires the JSON file; geo_map_display.py ignores it
+
+CMD [ "python3", "-u", "./QController.py", "/app/demo.json" ]

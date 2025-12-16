@@ -1,0 +1,4 @@
+# pip3 install -r requirements-<app>.txt
+flask
+requests
+tornado

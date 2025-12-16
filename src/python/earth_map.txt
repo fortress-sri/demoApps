@@ -1,0 +1,19 @@
+Create a Python3 Webserver that satisfies the following:
+
+Purpose:
+  Displays geo-coordinate markers on a flat-Earth graphic in real-time.
+
+Advertised API:
+  REST API POST that accepts JSONs with
+
+  {
+      "label": "<label>",    
+      "lat": <latitude; -90..90>,
+      "lon": <longitude; -180..180>,
+      ["color": <color; representation TBD>]
+  }
+
+When updates for a given label are received, all markers are redrawn.
+
+https://svs.gsfc.nasa.gov/3615
+https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/earth_noClouds.0330.jpg

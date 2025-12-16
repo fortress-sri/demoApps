@@ -1,0 +1,6 @@
+# pip3 install -r requirements-orbitsApp.txt
+numpy
+pyproj
+requests
+scipy
+zmq

@@ -1,0 +1,136 @@
+diff --git a/src/main.py b/src/main.py
+index 5ec9105..3566b5d 100644
+--- a/src/main.py
++++ b/src/main.py
+@@ -41,52 +41,56 @@ def validate_target(target: str) -> bool:
+         except ValueError:
+             return False
+ 
+-def main():
++def getargparser ():
+     parser = argparse.ArgumentParser(
+         description="Network Scanner - A tool for analyzing hosts on a network",
+         formatter_class=argparse.RawDescriptionHelpFormatter
+     )
+-    
++
+     parser.add_argument(
+         "target",
+         help="Target IP address or network (e.g., 192.168.1.1 or 192.168.1.0/24)"
+     )
+-    
++
+     parser.add_argument(
+         "-t", "--type",
+         choices=["all", "icmp", "tcp", "arp"],
+         default="all",
+         help="Type of scan to perform (default: all)"
+     )
+-    
++
+     parser.add_argument(
+         "-p", "--ports",
+         help="Ports to scan (e.g., 80,443 or 1-1000)"
+     )
+-    
++
+     parser.add_argument(
+         "-T", "--timeout",
+         type=int,
+         default=2,
+         help="Timeout in seconds for each scan (default: 2)"
+     )
+-    
++
++    return parser
++
++def validateargs (args):
++    # Validate target
++    if not validate_target(args.target):
++        print(f"Error: Invalid target format: {args.target}")
++        print("Please provide a valid IP address (e.g., 192.168.1.1) or network (e.g., 192.168.1.0/24)")
++        sys.exit(1)
++
++    # Validate timeout
++    if args.timeout <= 0:
++        print("Error: Timeout must be a positive number")
++        sys.exit(1)
++
++    return args
++
++def run (args):
+     try:
+-        args = parser.parse_args()
+-        
+-        # Validate target
+-        if not validate_target(args.target):
+-            print(f"Error: Invalid target format: {args.target}")
+-            print("Please provide a valid IP address (e.g., 192.168.1.1) or network (e.g., 192.168.1.0/24)")
+-            sys.exit(1)
+-        
+-        # Validate timeout
+-        if args.timeout <= 0:
+-            print("Error: Timeout must be a positive number")
+-            sys.exit(1)
+-        
+         scanner = NetworkScanner(timeout=args.timeout)
+-        
++
+         # Parse ports if provided
+         ports = None
+         if args.ports:
+@@ -95,27 +99,27 @@ def main():
+             except ValueError as e:
+                 print(f"Error: {str(e)}")
+                 sys.exit(1)
+-        
++
+         # Perform scan
+         results = scanner.scan_network(
+             target=args.target,
+             scan_type=args.type,
+             ports=ports
+         )
+-        
++
+         # Print results
+         print("\nScan Results:")
+         print("=============")
+-        
++
+         if results["icmp"] is not None:
+             status = "UP" if results["icmp"] else "DOWN"
+             print(f"\nICMP Scan: Host is {status}")
+-        
++
+         if results["tcp"] is not None:
+             print("\nTCP Port Scan Results:")
+             for port, status in sorted(results["tcp"].items()):
+                 print(f"Port {port}: {status}")
+-        
++
+         if results["arp"] is not None:
+             print("\nARP Scan Results:")
+             if results["arp"]:
+@@ -125,7 +129,7 @@ def main():
+                     print(f"{client['ip']}\t\t{client['mac']}")
+             else:
+                 print("No hosts found in the network")
+-    
++
+     except KeyboardInterrupt:
+         print("\nScan interrupted by user")
+         sys.exit(0)
+@@ -133,5 +137,10 @@ def main():
+         print(f"Error: {str(e)}")
+         sys.exit(1)
+ 
++def main():
++    parser = getargparser ()
++    run (validateargs (parser.parse_args()))
++
++
+ if __name__ == "__main__":
+-    main() 
+\ No newline at end of file
++    main()

@@ -1,0 +1,4 @@
+# pip3 install -r requirements-thirdPartyApp.txt
+zmq
+tornado
+scapy>=2.4.3

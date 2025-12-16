@@ -1,0 +1,24 @@
+{
+    "num-planes": 2,
+    "num-sats": 14,
+    "inclination": "44.0..55.0",
+    "longitude": "0.0..35.0",
+    "start-time": "18:00:00",
+    "endpoint": "http://fortress2:5000/api/marker",
+    "interval": 1,
+    "time-multiplier": 100,
+    "HIL": {
+        "fortress1":     1,
+        "fortress2":  "2,2",
+        "fortress3":     3,
+        "fortress4":  "2,4",
+        "fortress5":  "1,5",
+        "fortress6":  "2,6",
+        "fortress7":     7
+    },
+    "Q-endpoint": "http://fortress2:16171/nodes",
+    "Q-ZMQ-pub": "tcp://fortress2:12343",
+    "exfilt-endpoint": "http://fortress2:24519/exfilt",
+    "log-level": "DEBUG",
+    "debug": true
+}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earth Map Display</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for map visualization */
+        body { font-family: 'Inter', sans-serif; background-color: #f7fafc; }
+        #map-container {
+            position: relative;
+            background-image: url("image/earth_noClouds.0330.jpg");
+            background-size: cover;
+            background-position: center;
+            width: 100%;
+            max-width: 1200px;
+            height: 600px;
+            border: 4px solid #374151;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%); /* Center the marker on the coordinate */
+            transition: all 0.5s ease-out;
+            border: 2px solid white;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+        .marker-label {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.75rem;
+            color: #1f2937;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .marker:hover .marker-label {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="p-8 flex flex-col items-center min-h-screen">
+
+    <h1 class="text-4xl font-extrabold text-gray-800 mb-6">Earth Map Display</h1>
+
+    <!-- Map Container -->
+    <div id="map-container" class="rounded-lg">
+        <!-- Markers will be injected here by JavaScript -->
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const mapContainer = document.getElementById('map-container');
+        const MAP_WIDTH = 1200; // Matches container max-width for simple calculations
+        const MAP_HEIGHT = 600;
+
+        /**
+         * Converts Latitude/Longitude to pixel coordinates using a simplified rectilinear projection.
+         * Lon: -180 to +180 maps to X: 0 to MAP_WIDTH
+         * Lat: -90 to +90 maps to Y: MAP_HEIGHT to 0 (top-down)
+         * @param {number} lat - Latitude (-90 to 90)
+         * @param {number} lon - Longitude (-180 to 180)
+         * @returns (x: number, y: number) Pixel coordinates.
+         */
+        function geoToPixel(lat, lon) {
+            // X calculation (Linear mapping of -180 to 180 over 1200 pixels)
+            const x = MAP_WIDTH * (lon + 180) / 360;
+
+            // Y calculation (Linear mapping of -90 to 90 over 600 pixels, flipped for screen coords)
+            // 90 (North) should be near Y=0
+            // -90 (South) should be near Y=600
+            const y = MAP_HEIGHT * (90 - lat) / 180;
+
+            return { x, y };
+        }
+
+        /**
+         * Fetches markers and redraws the map.
+         */
+        async function updateMap() {
+            try {
+                const response = await fetch('/api/markers');
+                const markersData = await response.json();
+
+                // 1. Clear existing markers
+                mapContainer.innerHTML = '';
+
+                // 2. Redraw all markers
+                markersData.forEach(marker => {
+                    const { lat, lon, label, color } = marker;
+                    const { x, y } = geoToPixel(lat, lon);
+
+                    const markerElement = document.createElement('div');
+                    markerElement.className = `marker ${color} hover:shadow-lg`;
+                    markerElement.style.left = `${x}px`;
+                    markerElement.style.top = `${y}px`;
+
+                    const labelElement = document.createElement('span');
+                    labelElement.className = 'marker-label';
+                    labelElement.textContent = `${label} (${lat.toFixed(2)}, ${lon.toFixed(2)})`;
+
+                    markerElement.appendChild(labelElement);
+                    mapContainer.appendChild(markerElement);
+                });
+
+            } catch (error) {
+                console.error("Error fetching or updating markers:", error);
+            }
+        }
+
+        // Initialize the map and set up the polling interval
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial map load
+            updateMap();
+
+            // Set up real-time polling every 1000 milliseconds (1 second)
+            setInterval(updateMap, 1000);
+        });
+    </script>
+</body>
+</html>

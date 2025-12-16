@@ -1,0 +1,39 @@
+FROM gcc:latest AS patch
+
+WORKDIR /app
+
+ADD https://github.com/0xShun/Basic_Network_Scanner.git /app/bns
+
+RUN --mount=type=bind,source=tmp_patch_bns,target=/tmp/patch_bns \
+    /tmp/patch_bns/patch_bns.sh -B /app/bns
+
+FROM python:3.14-slim-bookworm AS python
+
+# thirdPartyApp.py requires
+#
+#   zmq and tornado
+#
+# to support ZMQ pub/sub and
+#
+#   scapy
+#
+# to use Basic_Network_Scanner methods.
+
+RUN pip3 install \
+    zmq \
+    tornado \
+    scapy>=2.4.3
+
+WORKDIR /app
+
+COPY src/python/thirdPartyApp.py src/python/jsonArgParse.py \
+     src/python/ZmqPPWrapper.py src/python/ZmqSubscriber.py \
+     test/orbit/_JSON startApp.sh\
+     .
+
+COPY --from=patch /app/bns /app/bns
+
+# thirdPartyApp.py requires the JSON file
+
+CMD [ "bash", "startApp.sh", "python3", "-u", "./_APP.py", "/app/_JSON" ]
+#CMD [ "tail", "-f", "/dev/null" ]
